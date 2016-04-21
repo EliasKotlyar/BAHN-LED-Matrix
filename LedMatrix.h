@@ -1,5 +1,8 @@
 #include <SPI.h>
 #include "Arduino.h"
+#include <Sprite.h>
+#include "font_8x8_col.h"
+
 class LedMatrix
 {
   public:
@@ -8,6 +11,8 @@ class LedMatrix
     void update(void);
     void setRow(byte rowNr);
     void setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state);
+    void writeSprite(byte ledMatrixNr,Sprite sprite);
+    void writeFont(byte ledMatrixNr,char c);
   private:
     int latchPin = 12;  // Rck Pin / pin 12
     int dataPin = 11;   // SERPin / pin 11 (MOSI pin)

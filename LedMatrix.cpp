@@ -34,8 +34,36 @@ LedMatrix::LedMatrix(void)
 void LedMatrix::setPixel(byte x,byte y,byte state){
 
 }
-/**
 
+void LedMatrix::writeSprite(byte ledMatrixNr,Sprite sprite)
+{
+  for (uint8_t i = 0; i < sprite.height(); i++){
+    for (uint8_t j = 0; j < sprite.width(); j++){
+      byte buffer = sprite.read(j, i);
+      setPixelOnLedMatrix(ledMatrixNr,j,i,buffer);
+    }
+  }
+}
+void LedMatrix::writeFont(byte ledMatrixNr,char c)
+{
+  //Serial.println((byte)c);
+  for (uint8_t i = 0; i < 8; i++){
+    byte charo = pgm_read_byte(&font_8x8_col[c][i]);
+    //Serial.println(charo, HEX);
+
+    for (uint8_t j = 0; j < 8; j++){
+      byte bit = (charo >> j) & 1;
+      //Serial.print(bit);
+      setPixelOnLedMatrix(ledMatrixNr,7-i,j,bit);
+    }
+    //Serial.println();
+
+  }
+
+}
+
+/**
+http://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit-in-c-c
 */
 void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
   byte number = displayMatrix[lednr][y];
@@ -74,6 +102,8 @@ void LedMatrix::update(void) {
   digitalWrite(latchPin, HIGH);
   delayMicroseconds(300);
   digitalWrite(latchPin, LOW);
+
+
 
   //SPI.endTransaction();
   // Increase Line Number

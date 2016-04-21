@@ -1,9 +1,23 @@
 #include "LedMatrix.h"
 #include "TimerOne.h"
+#include <Sprite.h>
 //#include "digitalWrite.h"
 LedMatrix ledmatrix;
 int i;
 int j;
+
+Sprite letter_L = Sprite(5, 8,
+  B11000,
+  B11000,
+  B11000,
+  B11000,
+  B11000,
+  B11000,
+  B11111,
+  B11111
+);
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -11,6 +25,19 @@ void setup() {
 
   Timer1.initialize(1000);
   Timer1.attachInterrupt(umschalten);
+
+  //ledmatrix.writeSprite(0, letter_L);
+
+  String myStr = "MUNICHMAKERLAB";
+
+  for(byte c = 0; c < myStr.length() ; c++){
+      ledmatrix.writeFont(2 + c ,myStr[c]);
+  }
+
+
+
+
+
   i = 0;
   j = 0;
 
@@ -25,6 +52,7 @@ void umschalten(){
 
 
 void loop() {
+
 
   delay(1000);
   ledmatrix.setPixelOnLedMatrix(0,j,i,1);
