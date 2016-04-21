@@ -21,6 +21,7 @@ class LedMatrix
     int A1PIN = 6;
     int A0PIN = 5;
     byte lineNr = 0;
+    bool lineOddEven = false;
     byte displayMatrix[17][8];
 
 

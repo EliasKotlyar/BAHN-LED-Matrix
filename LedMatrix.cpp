@@ -73,6 +73,7 @@ void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
 
 void LedMatrix::update(void) {
 
+
   setRow(lineNr);
   SPI.begin();
   SPI.beginTransaction(settingsA);
@@ -82,6 +83,10 @@ void LedMatrix::update(void) {
     byte transferbuffer = displayMatrix[number][lineNr];
     //transferbuffer = 255;
     //transferbuffer = 0;
+    /*if(lineNr % 2 == lineOddEven){
+    transferbuffer = 0;
+    }
+    */
     SPI.transfer(transferbuffer);
 
     /*
@@ -96,12 +101,34 @@ void LedMatrix::update(void) {
     //delay(10000);
 
   }
+
+
+  digitalWrite(latchPin, HIGH);
+  delayMicroseconds(100);
+  digitalWrite(latchPin, LOW);
+  delayMicroseconds(400);
+/*
+  SPI.endTransaction();
+
+  //delayMicroseconds(100);
+
+
+  SPI.begin();
+  SPI.beginTransaction(settingsA);
+  */
+  SPI.end();
+  SPI.begin();
+
+  for (byte number = 0; number < 17; number++) {
+    SPI.transfer(0);
+  }
+  digitalWrite(latchPin, HIGH);
+  delayMicroseconds(100);
+  digitalWrite(latchPin, LOW);
+
   SPI.endTransaction();
   SPI.end();
 
-  digitalWrite(latchPin, HIGH);
-  delayMicroseconds(300);
-  digitalWrite(latchPin, LOW);
 
 
 
@@ -110,9 +137,12 @@ void LedMatrix::update(void) {
 
 
   lineNr++;
+
   if (lineNr == 8 ) {
     lineNr = 0;
+    lineOddEven = !lineOddEven;
   }
+
 }
 /**
    Sets a Row According to the Set

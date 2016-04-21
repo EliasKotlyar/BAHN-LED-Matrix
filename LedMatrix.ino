@@ -28,9 +28,9 @@ void setup() {
 
   //ledmatrix.writeSprite(0, letter_L);
 
-  String myStr = "MUNICHMAKERLAB";
+  String myStr = "BBBBBBBBBBBBBBBBBBB";
 
-  for(byte c = 0; c < myStr.length() ; c++){
+  for(byte c = 0; c < 10 ; c++){
       ledmatrix.writeFont(2 + c ,myStr[c]);
   }
 
