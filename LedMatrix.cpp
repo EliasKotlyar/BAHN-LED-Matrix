@@ -32,7 +32,10 @@ LedMatrix::LedMatrix(void)
   }
 }
 void LedMatrix::setPixel(byte x,byte y,byte state){
-
+  byte lednr = x / 8;
+  x = x % 8;
+  x = 7-x;
+  setPixelOnLedMatrix(lednr,x,y,state);
 }
 
 void LedMatrix::writeSprite(byte ledMatrixNr,Sprite sprite)
