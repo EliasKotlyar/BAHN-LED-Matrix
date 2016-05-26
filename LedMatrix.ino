@@ -4,9 +4,10 @@
 //#include "digitalWrite.h"
 LedMatrix ledmatrix;
 int i;
-String LAUFSCHRIFT = "MUNICHMAKERLAB";
+String LAUFSCHRIFT = "Munich Maker Lab";
 byte speed = 0;
 byte stringLen;
+
 
 
 void setup() {
@@ -18,7 +19,7 @@ void setup() {
 
   //ledmatrix.writeSprite(0, letter_L);
   stringLen = LAUFSCHRIFT.length();
-  
+
 
 
 
@@ -35,15 +36,15 @@ void umschalten(){
 
 void loop() {
 
+
   ledmatrix.clearMatrix();
+
   for(byte c = 0; c < stringLen ; c++){
       ledmatrix.writeFont(i+c*8,LAUFSCHRIFT[c]);
   }
   ledmatrix.send();
-
   delay(speed);
-
-  i++;
+  i--;
 
 
 
