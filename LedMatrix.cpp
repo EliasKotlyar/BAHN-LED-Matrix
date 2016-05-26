@@ -20,46 +20,45 @@ LedMatrix::LedMatrix(void)
     digitalWrite(pinArray[i], LOW);
   }
 
+  clearMatrix();
 
-
-
-
-  for (byte number = 0; number < 17; number ++) {
-    for(byte line = 0; line < 8; line ++){
-      displayMatrix[number][line] = 0;
-    }
-
-  }
+}
+void LedMatrix::clearMatrix(){
+  memset( shadowMatrix,0,MAX_LEN);
 }
 void LedMatrix::setPixel(byte x,byte y,byte state){
   byte lednr = x / 8;
+  if(lednr > MAX_X - 1){
+      return;
+  }
   x = x % 8;
+  if(x > 7){
+    return;
+  }
   x = 7-x;
   setPixelOnLedMatrix(lednr,x,y,state);
+
 }
 
-void LedMatrix::writeSprite(byte ledMatrixNr,Sprite sprite)
+void LedMatrix::writeSprite(byte x,Sprite sprite)
 {
   for (uint8_t i = 0; i < sprite.height(); i++){
     for (uint8_t j = 0; j < sprite.width(); j++){
       byte buffer = sprite.read(j, i);
-      setPixelOnLedMatrix(ledMatrixNr,j,i,buffer);
+      setPixel(x + j,i,buffer);
     }
   }
 }
-void LedMatrix::writeFont(byte ledMatrixNr,char c)
+void LedMatrix::writeFont(byte x,char c)
 {
-  //Serial.println((byte)c);
+
   for (uint8_t i = 0; i < 8; i++){
     byte charo = pgm_read_byte(&font_8x8_col[c][i]);
-    //Serial.println(charo, HEX);
-
     for (uint8_t j = 0; j < 8; j++){
       byte bit = (charo >> j) & 1;
-      //Serial.print(bit);
-      setPixelOnLedMatrix(ledMatrixNr,7-i,j,bit);
+      setPixel(x + i,j,bit);
     }
-    //Serial.println();
+
 
   }
 
@@ -69,9 +68,12 @@ void LedMatrix::writeFont(byte ledMatrixNr,char c)
 http://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit-in-c-c
 */
 void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
-  byte number = displayMatrix[lednr][y];
+  byte number = shadowMatrix[lednr][y];
   number ^= (-state ^ number) & (1 << x);
-  displayMatrix[lednr][y] = number;
+  shadowMatrix[lednr][y] = number;
+}
+void LedMatrix::send(){
+  memcpy(  displayMatrix, shadowMatrix,MAX_LEN  );
 }
 
 void LedMatrix::update(void) {
@@ -84,24 +86,9 @@ void LedMatrix::update(void) {
   // Send Line:
   for (byte number = 0; number < 17; number++) {
     byte transferbuffer = displayMatrix[number][lineNr];
-    //transferbuffer = 255;
-    //transferbuffer = 0;
-    /*if(lineNr % 2 == lineOddEven){
-    transferbuffer = 0;
-    }
-    */
+
     SPI.transfer(transferbuffer);
 
-    /*
-    Serial.print("LEDNR:");
-    Serial.print(number);
-    Serial.print(" LineNR");
-    Serial.print(lineNr);
-    Serial.println();
-    */
-
-    //Serial.println(transferbuffer);
-    //delay(10000);
 
   }
 
@@ -110,15 +97,7 @@ void LedMatrix::update(void) {
   delayMicroseconds(100);
   digitalWrite(latchPin, LOW);
   delayMicroseconds(400);
-/*
-  SPI.endTransaction();
 
-  //delayMicroseconds(100);
-
-
-  SPI.begin();
-  SPI.beginTransaction(settingsA);
-  */
   SPI.end();
   SPI.begin();
 
@@ -133,17 +112,10 @@ void LedMatrix::update(void) {
   SPI.end();
 
 
-
-
-  //SPI.endTransaction();
-  // Increase Line Number
-
-
   lineNr++;
 
   if (lineNr == 8 ) {
     lineNr = 0;
-    lineOddEven = !lineOddEven;
   }
 
 }

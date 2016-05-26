@@ -13,6 +13,8 @@ class LedMatrix
     void setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state);
     void writeSprite(byte ledMatrixNr,Sprite sprite);
     void writeFont(byte ledMatrixNr,char c);
+    void clearMatrix();
+    void send();
   private:
     int latchPin = 12;  // Rck Pin / pin 12
     int dataPin = 11;   // SERPin / pin 11 (MOSI pin)
@@ -21,8 +23,13 @@ class LedMatrix
     int A1PIN = 6;
     int A0PIN = 5;
     byte lineNr = 0;
-    bool lineOddEven = false;
-    byte displayMatrix[17][8];
+
+    #define MAX_X 17
+    #define MAX_Y 8
+    #define MAX_LEN 136
+
+    byte displayMatrix[MAX_X][MAX_Y];
+    byte shadowMatrix[MAX_X][MAX_Y];
 
 
 };

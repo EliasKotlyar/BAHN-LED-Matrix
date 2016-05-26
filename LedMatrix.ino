@@ -4,20 +4,10 @@
 //#include "digitalWrite.h"
 LedMatrix ledmatrix;
 int i;
-int j;
+String LAUFSCHRIFT = "MUNICHMAKERLAB";
+byte speed = 0;
+byte stringLen;
 
-Sprite letter_L = Sprite(5, 8,
-  B11000,
-  B11000,
-  B11000,
-  B11000,
-  B11000,
-  B11000,
-  B11111,
-  B11111
-);
-
-bool state;
 
 void setup() {
   Serial.begin(9600);
@@ -27,22 +17,11 @@ void setup() {
   Timer1.attachInterrupt(umschalten);
 
   //ledmatrix.writeSprite(0, letter_L);
-
-  String myStr = "BBBBBBBBBBBBBBBBBBB";
-
-  for(byte c = 0; c < 8 ; c++){
-      //ledmatrix.writeFont(2 + c ,myStr[c]);
-      //ledmatrix.setPixelOnLedMatrix(0,c,1,1);
-  }
+  stringLen = LAUFSCHRIFT.length();
+  
 
 
 
-
-
-  i = 0;
-  j = 0;
-  //ledmatrix.update();
-  state = true;
 
 }
 
@@ -56,30 +35,15 @@ void umschalten(){
 
 void loop() {
 
-  ledmatrix.setPixel(i,1,state);
-  delay(100);
-  i++;
-  if (i == 136 ) {
-    i = 0;
-    state = !state;
+  ledmatrix.clearMatrix();
+  for(byte c = 0; c < stringLen ; c++){
+      ledmatrix.writeFont(i+c*8,LAUFSCHRIFT[c]);
   }
-  //delayMicroseconds(1000);
-  /*
+  ledmatrix.send();
 
+  delay(speed);
 
-  ledmatrix.setPixelOnLedMatrix(0,j,i,1);
-  //ledmatrix.setPixelOnLedMatrix(0,1,0,1);
-  //ledmatrix.setPixelOnLedMatrix(0,0,1,1);
-  j++;
-
-
-  */
-
-  //displayMatrix[number][lineNr]
-  //umschalten();
-  //  delay(500);
-
-  //delayMicroseconds(500);
+  i++;
 
 
 
