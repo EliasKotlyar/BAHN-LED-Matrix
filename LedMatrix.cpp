@@ -1,6 +1,5 @@
 
 #include "LedMatrix.h"
-
 SPISettings settingsA(16000000, MSBFIRST, SPI_MODE0);
 
 LedMatrix::LedMatrix(void)
@@ -73,43 +72,41 @@ void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
   shadowMatrix[lednr][y] = number;
 }
 void LedMatrix::send(){
+  mutex = 1;
   memcpy(  displayMatrix, shadowMatrix,MAX_LEN  );
+  mutex = 0;
 }
 
 void LedMatrix::update(void) {
+  if(mutex ==1){
+    return;
+  }
+  setRow(lineNr);  
 
-
-  setRow(lineNr);
   SPI.begin();
   SPI.beginTransaction(settingsA);
 
+
+  
   // Send Line:
   for (byte number = 0; number < 17; number++) {
     byte transferbuffer = displayMatrix[number][lineNr];
-
+    //shiftOut(dataPin, clockPin, MSBFIRST, transferbuffer);
     SPI.transfer(transferbuffer);
+    
 
 
   }
 
+  SPI.end();
 
   digitalWrite(latchPin, HIGH);
   delayMicroseconds(100);
   digitalWrite(latchPin, LOW);
-  delayMicroseconds(400);
+  delayMicroseconds(10000);
+  //delayMicroseconds(400);
 
-  SPI.end();
-  SPI.begin();
-
-  for (byte number = 0; number < 17; number++) {
-    SPI.transfer(0);
-  }
-  digitalWrite(latchPin, HIGH);
-  delayMicroseconds(100);
-  digitalWrite(latchPin, LOW);
-
-  SPI.endTransaction();
-  SPI.end();
+  
 
 
   lineNr++;
