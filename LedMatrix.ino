@@ -1,13 +1,14 @@
 #include "LedMatrix.h"
 #include <Sprite.h>
+
 extern "C" {
 #include "user_interface.h"
 }
 //#include "digitalWrite.h"
 LedMatrix ledmatrix;
-int i;
+int i = 0;
 String LAUFSCHRIFT = "Munich Maker Lab";
-byte speed = 100000;
+byte speed = 1000;
 byte stringLen;
 
 os_timer_t myTimer;
@@ -30,7 +31,11 @@ void setup() {
 
 
 void umschalten(void *pArg){
- ledmatrix.update();
+ 
+ for(byte c = 0; c < 8 ; c++){
+    ledmatrix.update();
+ }
+  system_soft_wdt_feed();
 }
 
 
@@ -40,13 +45,15 @@ void loop() {
 
 
   ledmatrix.clearMatrix();
-
   for(byte c = 0; c < stringLen ; c++){
       ledmatrix.writeFont(i+c*8,LAUFSCHRIFT[c]);
   }
   ledmatrix.send();
   delay(speed);
-  //i--;
+  //umschalten(0);
+  
+  
+  i--;
 
 
 

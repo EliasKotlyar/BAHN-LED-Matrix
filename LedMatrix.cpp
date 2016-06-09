@@ -18,6 +18,7 @@ LedMatrix::LedMatrix(void)
     pinMode(pinArray[i], OUTPUT);
     digitalWrite(pinArray[i], LOW);
   }
+  CreateMutux(&mutex);
 
   clearMatrix();
 
@@ -72,14 +73,16 @@ void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
   shadowMatrix[lednr][y] = number;
 }
 void LedMatrix::send(){
-  mutex = 1;
+  while(GetMutex(&mutex)==false){
+    yield();
+  }
   memcpy(  displayMatrix, shadowMatrix,MAX_LEN  );
-  mutex = 0;
+  ReleaseMutex(&mutex);
 }
 
 void LedMatrix::update(void) {
-  if(mutex ==1){
-    return;
+  while(GetMutex(&mutex)==false){
+    yield();
   }
   setRow(lineNr);  
 
@@ -98,22 +101,30 @@ void LedMatrix::update(void) {
 
   }
 
-  SPI.end();
+  
 
   digitalWrite(latchPin, HIGH);
   delayMicroseconds(100);
   digitalWrite(latchPin, LOW);
-  delayMicroseconds(10000);
+  //delayMicroseconds(10000);
   //delayMicroseconds(400);
+  for (byte number = 0; number < 17; number++) {
+    SPI.transfer(0);
+  }
+  
+  digitalWrite(latchPin, HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(latchPin, LOW);
 
+  SPI.end();
   
 
-
   lineNr++;
-
   if (lineNr == 8 ) {
     lineNr = 0;
   }
+  
+  ReleaseMutex(&mutex);
 
 }
 /**

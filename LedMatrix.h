@@ -2,6 +2,9 @@
 #include "Arduino.h"
 #include <Sprite.h>
 #include "font_8x8_col.h"
+extern "C" {
+#include "mutex.h"
+}
 
 class LedMatrix
 {
@@ -31,7 +34,7 @@ class LedMatrix
     byte displayMatrix[MAX_X][MAX_Y];
     byte shadowMatrix[MAX_X][MAX_Y];
 
-    byte mutex = 0;
+    mutex_t mutex;
 
 
 };
