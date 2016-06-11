@@ -195,6 +195,7 @@ void LedMatrix::setScrollSpeed(byte speed){
 void LedMatrix::setText(String text){
   scrollText = text;
   stringLen = text.length();
+  strCounter = 136 - stringLen * 8;
 }
 void LedMatrix::startScroll(){
   FuncDelegate f_delegate;

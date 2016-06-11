@@ -1,10 +1,13 @@
 #include <SPI.h>
 #include "Arduino.h"
-#include "SimpleTimer.h"
+#include "SimpleTimerDelegate.h"
 #include "font_8x8_col.h"
 #include "FastDelegate.h"
 using namespace fastdelegate;
 
+extern "C" {
+  #include "user_interface.h"
+}
 
 typedef FastDelegate1<int> FuncDelegate;
 
@@ -43,8 +46,8 @@ class LedMatrix
     byte shadowMatrix[MAX_X][MAX_Y];
 
     // Loop Text Functions:
-    SimpleTimer updateTimer;
-    SimpleTimer loopTextTimer;
+    SimpleTimerDelegate updateTimer;
+    SimpleTimerDelegate loopTextTimer;
     String scrollText;
     int strCounter = 0;
     byte stringLen;
