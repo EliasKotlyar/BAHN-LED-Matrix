@@ -18,7 +18,12 @@ LedMatrix::LedMatrix(void)
     pinMode(pinArray[i], OUTPUT);
     digitalWrite(pinArray[i], LOW);
   }
-  CreateMutux(&mutex);
+  //
+
+  FuncDelegate f_delegate;
+  f_delegate = MakeDelegate(this, &LedMatrix::switchLEDs);
+  updateTimer.setInterval(2, f_delegate);
+
 
   clearMatrix();
 
@@ -40,15 +45,6 @@ void LedMatrix::setPixel(byte x,byte y,byte state){
 
 }
 
-void LedMatrix::writeSprite(byte x,Sprite sprite)
-{
-  for (uint8_t i = 0; i < sprite.height(); i++){
-    for (uint8_t j = 0; j < sprite.width(); j++){
-      byte buffer = sprite.read(j, i);
-      setPixel(x + j,i,buffer);
-    }
-  }
-}
 void LedMatrix::writeFont(byte x,char c)
 {
 
@@ -73,35 +69,28 @@ void LedMatrix::setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state){
   shadowMatrix[lednr][y] = number;
 }
 void LedMatrix::send(){
-  while(GetMutex(&mutex)==false){
-    yield();
-  }
   memcpy(  displayMatrix, shadowMatrix,MAX_LEN  );
-  ReleaseMutex(&mutex);
 }
 
 void LedMatrix::update(void) {
-  while(GetMutex(&mutex)==false){
-    yield();
-  }
-  setRow(lineNr);  
+  setRow(lineNr);
 
   SPI.begin();
   SPI.beginTransaction(settingsA);
 
 
-  
+
   // Send Line:
   for (byte number = 0; number < 17; number++) {
     byte transferbuffer = displayMatrix[number][lineNr];
     //shiftOut(dataPin, clockPin, MSBFIRST, transferbuffer);
     SPI.transfer(transferbuffer);
-    
+
 
 
   }
 
-  
+
 
   digitalWrite(latchPin, HIGH);
   delayMicroseconds(100);
@@ -111,20 +100,20 @@ void LedMatrix::update(void) {
   for (byte number = 0; number < 17; number++) {
     SPI.transfer(0);
   }
-  
+
   digitalWrite(latchPin, HIGH);
   delayMicroseconds(1000);
   digitalWrite(latchPin, LOW);
 
   SPI.end();
-  
+
 
   lineNr++;
   if (lineNr == 8 ) {
     lineNr = 0;
   }
-  
-  ReleaseMutex(&mutex);
+
+
 
 }
 /**
@@ -182,4 +171,33 @@ void LedMatrix::setRow(byte rowNr) {
   digitalWrite(A1PIN, A1Value);
   digitalWrite(A2PIN, A2Value);
 
+}
+
+void LedMatrix::loopText(int con) {
+  clearMatrix();
+  for (byte c = 0; c < stringLen ; c++) {
+    writeFont(strCounter + c * 8, scrollText[c]);
+  }
+  send();
+  strCounter--;
+}
+void LedMatrix::switchLEDs(int c) {
+  update();
+}
+
+void LedMatrix::loop(){
+  updateTimer.run();
+  loopTextTimer.run();
+}
+void LedMatrix::setScrollSpeed(byte speed){
+  scrollSpeed = speed;
+}
+void LedMatrix::setText(String text){
+  scrollText = text;
+  stringLen = text.length();
+}
+void LedMatrix::startScroll(){
+  FuncDelegate f_delegate;
+  f_delegate = MakeDelegate(this, &LedMatrix::loopText);
+  loopTextTimer.setInterval(scrollSpeed, f_delegate);
 }

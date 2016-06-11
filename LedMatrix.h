@@ -1,23 +1,31 @@
 #include <SPI.h>
 #include "Arduino.h"
-#include <Sprite.h>
+#include "SimpleTimer.h"
 #include "font_8x8_col.h"
-extern "C" {
-#include "mutex.h"
-}
+#include "FastDelegate.h"
+using namespace fastdelegate;
+
+
+typedef FastDelegate1<int> FuncDelegate;
 
 class LedMatrix
 {
   public:
+
     LedMatrix(void);
     void setPixel(byte x,byte y,byte state);
     void update(void);
     void setRow(byte rowNr);
     void setPixelOnLedMatrix(byte lednr,byte x,byte y,byte state);
-    void writeSprite(byte ledMatrixNr,Sprite sprite);
     void writeFont(byte ledMatrixNr,char c);
     void clearMatrix();
     void send();
+    void loop();
+    void setScrollSpeed(byte speed);
+    void setText(String text);
+    void switchLEDs(int c);
+    void loopText(int con);
+    void startScroll();
   private:
     int latchPin = D8;  // Rck Pin / pin 12
     int dataPin = D7;   // SERPin / pin 11 (MOSI pin)
@@ -34,7 +42,11 @@ class LedMatrix
     byte displayMatrix[MAX_X][MAX_Y];
     byte shadowMatrix[MAX_X][MAX_Y];
 
-    mutex_t mutex;
-
-
+    // Loop Text Functions:
+    SimpleTimer updateTimer;
+    SimpleTimer loopTextTimer;
+    String scrollText;
+    int strCounter = 0;
+    byte stringLen;
+    byte scrollSpeed = 100;
 };
