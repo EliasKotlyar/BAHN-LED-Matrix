@@ -16,10 +16,19 @@
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 #include <ESP8266WiFi.h>
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
 #include "LedMatrix.h"
 #include "SimpleTimer.h"
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+#include <PubSubClient.h>
+
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+
+
 LedMatrix ledmatrix;
 /************************* WiFi Access Point *********************************/
 
@@ -32,41 +41,14 @@ LedMatrix ledmatrix;
 #define AIO_SERVERPORT  1883                   // use 8883 for SSL
 #define AIO_USERNAME    "ledmatrix"
 #define AIO_KEY         "ledmatrix"
+#define AIO_TOPIC "testtopic/ledmatrix"
 
-/************ Global State (you don't need to change this!) ******************/
 
-// Create an ESP8266 WiFiClient class to connect to the MQTT server.
-WiFiClient client;
-// or... use WiFiFlientSecure for SSL
-//WiFiClientSecure client;
+#define HOSTNAME "LEDMATRIX-"
+#define OTA_PASS "1234"
 
-// Store the MQTT server, username, and password in flash memory.
-// This is required for using the Adafruit MQTT library.
-const char MQTT_SERVER[] PROGMEM    = AIO_SERVER;
-const char MQTT_USERNAME[] PROGMEM  = AIO_USERNAME;
-const char MQTT_PASSWORD[] PROGMEM  = AIO_KEY;
+const char* mqtt_server = AIO_SERVER;
 
-// Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, AIO_SERVERPORT, MQTT_USERNAME, MQTT_PASSWORD);
-
-/****************************** Feeds ***************************************/
-/*
-// Setup a feed called 'photocell' for publishing.
-// Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
-const char PHOTOCELL_FEED[] PROGMEM = AIO_USERNAME "/feeds/photocell";
-Adafruit_MQTT_Publish photocell = Adafruit_MQTT_Publish(&mqtt, PHOTOCELL_FEED);
-*/
-
-// Setup a feed called 'onoff' for subscribing to changes.
-const char ONOFF_FEED[] PROGMEM = "testtopic/ledmatrix";
-Adafruit_MQTT_Subscribe onoffbutton = Adafruit_MQTT_Subscribe(&mqtt, ONOFF_FEED);
-
-/*************************** Sketch Code ************************************/
-
-// Bug workaround for Arduino 1.6.6, it seems to need a function declaration
-// for some reason (only affects ESP8266, likely an arduino-builder bug).
-
-SimpleTimer checkMessagesTimer;
 
 void MQTT_connect();
 
@@ -75,7 +57,10 @@ void setup() {
   ledmatrix.setText("Munich Maker Lab");
   delay(10);
 
-  Serial.println(F("Adafruit MQTT demo"));
+  Serial.println(F("MQTT LED-Matrix"));
+  String hostname(HOSTNAME);
+  hostname += String(ESP.getChipId(), HEX);
+  WiFi.hostname(hostname);
 
   // Connect to WiFi access point.
   Serial.println(); Serial.println();
@@ -91,81 +76,75 @@ void setup() {
 
   Serial.println("WiFi connected");
   Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  Serial.println("Hostname: " + hostname);
 
-  // Setup MQTT subscription for onoff feed.
-  mqtt.subscribe(&onoffbutton);
 
-  checkMessagesTimer.setInterval(500, checkMessages);
+
 
   ledmatrix.startScroll();
+  // Start OTA server.
+  ArduinoOTA.setHostname((const char *)hostname.c_str());
+  ArduinoOTA.setPassword((const char *)OTA_PASS);
+  ArduinoOTA.begin();
+  // Mqtt
+  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setCallback(callback);
 }
 
-uint32_t x=0;
-void checkMessages(){
-
-  Adafruit_MQTT_Subscribe *subscription;
-  subscription = mqtt.readSubscription(1);
-  if (subscription == &onoffbutton) {
-    Serial.print(F("Got: "));
-    String cmd = String((char *)onoffbutton.lastread);
-    Serial.println(cmd);
-    ledmatrix.setText(cmd);
 
 
-  }
-}
 void loop() {
-  MQTT_connect();
-
-  // Ensure the connection to the MQTT server is alive (this will make the first
-  // connection and automatically reconnect when disconnected).  See the MQTT_connect
-  // function definition further below.
 
 
-  // this is our 'wait for incoming subscription packets' busy subloop
-  // try to spend your time here
+  mqttClient.loop();
 
-
-
-  while(1){
-    ledmatrix.loop();
-    checkMessagesTimer.run();
-    system_soft_wdt_feed();
-
+  if (!mqttClient.connected()) {
+    reconnectMqtt();
   }
 
 
+  ledmatrix.loop();
 
+  ArduinoOTA.handle();
+  system_soft_wdt_feed();
 
-  if(! mqtt.ping()) {
-    mqtt.disconnect();
-  }
 
 }
 
-// Function to connect and reconnect as necessary to the MQTT server.
-// Should be called in the loop function and it will take care if connecting.
-void MQTT_connect() {
-  int8_t ret;
 
-  // Stop if already connected.
-  if (mqtt.connected()) {
-    return;
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  char text[length];  
+  strncpy(text, (char*)payload, length);
+  text[length] = 0;
+  Serial.print(text);
+  String cmd = String((char *)text);
+  ledmatrix.setText(cmd);
+  
+  Serial.println();
+
+
+
+}
+void reconnectMqtt() {
+  // Loop until we're reconnected
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (mqttClient.connect("ESP8266Client12312")) {
+      Serial.println("connected");
+
+      // ... and resubscribe
+      mqttClient.subscribe(AIO_TOPIC);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
   }
-
-  Serial.print("Connecting to MQTT... ");
-
-  uint8_t retries = 3;
-  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
-       mqtt.disconnect();
-       delay(2000);  // wait 5 seconds
-       retries--;
-       if (retries == 0) {
-         // basically die and wait for WDT to reset me
-         while (1);
-       }
-  }
-  Serial.println("MQTT Connected!");
 }
