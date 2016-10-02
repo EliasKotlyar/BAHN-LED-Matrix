@@ -53,6 +53,7 @@ const char* mqtt_server = AIO_SERVER;
 void MQTT_connect();
 
 void setup() {
+  ledmatrix.toggleWC(0);
   Serial.begin(115200);
   ledmatrix.setText("Munich Maker Lab");
   delay(10);
@@ -124,7 +125,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   String cmd = String((char *)text);
   ledmatrix.setText(cmd);
   
-  Serial.println();
+  Serial.println();  
 
 
 

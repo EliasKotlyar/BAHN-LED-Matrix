@@ -29,6 +29,7 @@ class LedMatrix
     void switchLEDs(int c);
     void loopText(int con);
     void startScroll();
+    void toggleWC(byte state);
   private:
     int latchPin = D8;  // Rck Pin / pin 12
     int dataPin = D7;   // SERPin / pin 11 (MOSI pin)
@@ -36,6 +37,7 @@ class LedMatrix
     int A2PIN = D3;
     int A1PIN = D2;
     int A0PIN = D1;
+    int WCPIN = D4;
     byte lineNr = 0;
 
     #define MAX_X 17

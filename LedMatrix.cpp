@@ -10,7 +10,8 @@ LedMatrix::LedMatrix(void)
     dataPin,
     A0PIN,
     A1PIN,
-    A2PIN
+    A2PIN,
+    WCPIN
   };
   for (int i = 0; i < sizeof(pinArray); i++) {
     //Serial.println(pinArray[i]);
@@ -28,6 +29,7 @@ LedMatrix::LedMatrix(void)
   clearMatrix();
 
 }
+
 void LedMatrix::clearMatrix(){
   memset( shadowMatrix,0,MAX_LEN);
 }
@@ -202,3 +204,8 @@ void LedMatrix::startScroll(){
   f_delegate = MakeDelegate(this, &LedMatrix::loopText);
   loopTextTimer.setInterval(scrollSpeed, f_delegate);
 }
+
+void LedMatrix::toggleWC(byte state){
+  digitalWrite(WCPIN,state);
+}
+
